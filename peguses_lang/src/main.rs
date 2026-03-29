@@ -1,7 +1,10 @@
 mod lexer;
 mod token;
+mod ast;
+mod parser;
 
 use lexer::Lexer;
+use parser::Parser;
 
 fn main() {
     let source = r#"
@@ -10,15 +13,10 @@ fn main() {
     "#;
 
     let mut lexer = Lexer::new(source);
+    let tokens = lexer.tokenize().unwrap();
 
-    match lexer.tokenize() {
-        Ok(tokens) => {
-            for token in tokens {
-                println!("{:?}", token);
-            }
-        }
-        Err(err) => {
-            eprintln!("Lexer error: {}", err);
-        }
-    }
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse_program().unwrap();
+
+    println!("{:#?}", program);
 }
