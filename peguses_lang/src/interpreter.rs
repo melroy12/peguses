@@ -16,6 +16,7 @@ impl Value {
         }
     }
 
+    #[allow(dead_code)]
     fn as_boolean(&self) -> Result<bool, String> {
         match self {
             Value::Boolean(b) => Ok(*b),
