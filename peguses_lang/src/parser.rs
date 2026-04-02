@@ -43,7 +43,10 @@ impl Parser {
         match &self.current().kind {
             TokenKind::Let => self.parse_let(),
             TokenKind::Print => self.parse_print(),
-            _ => Err("Unexpected statement".to_string()),
+            TokenKind::If => self.parse_if(),
+            TokenKind::While => self.parse_while(),
+            TokenKind::Ident(_) => self.parse_assignment(),
+            _ => Err(format!("Unexpected statement: {:?}", self.current().kind)),
         }
     }
         fn parse_let(&mut self) -> Result<Stmt, String> {
@@ -75,8 +78,131 @@ impl Parser {
 
         Ok(Stmt::Print { value: expr })
     }
+    
+    fn parse_assignment(&mut self) -> Result<Stmt, String> {
+        let name = match &self.current().kind {
+            TokenKind::Ident(s) => {
+                let n = s.clone();
+                self.advance();
+                n
+            }
+            _ => return Err("Expected identifier".to_string()),
+        };
+
+        self.expect(TokenKind::Equal)?;
+
+        let value = self.parse_expr()?;
+
+        self.expect(TokenKind::Semicolon)?;
+
+        Ok(Stmt::Assign { name, value })
+    }
+    
+    fn parse_if(&mut self) -> Result<Stmt, String> {
+        self.advance(); // consume 'if'
+
+        let condition = self.parse_expr()?;
+
+        self.expect(TokenKind::LBrace)?;
+        let then_block = self.parse_block()?;
+        self.expect(TokenKind::RBrace)?;
+
+        let else_block = if matches!(self.current().kind, TokenKind::Else) {
+            self.advance(); // consume 'else'
+            self.expect(TokenKind::LBrace)?;
+            let block = self.parse_block()?;
+            self.expect(TokenKind::RBrace)?;
+            Some(block)
+        } else {
+            None
+        };
+
+        Ok(Stmt::If {
+            condition,
+            then_block,
+            else_block,
+        })
+    }
+    
+    fn parse_while(&mut self) -> Result<Stmt, String> {
+        self.advance(); // consume 'while'
+
+        let condition = self.parse_expr()?;
+
+        self.expect(TokenKind::LBrace)?;
+        let body = self.parse_block()?;
+        self.expect(TokenKind::RBrace)?;
+
+        Ok(Stmt::While { condition, body })
+    }
+    
+    fn parse_block(&mut self) -> Result<Vec<Stmt>, String> {
+        let mut statements = Vec::new();
+
+        while !matches!(self.current().kind, TokenKind::RBrace | TokenKind::Eof) {
+            statements.push(self.parse_statement()?);
+        }
+
+        Ok(statements)
+    }
         fn parse_expr(&mut self) -> Result<Expr, String> {
-        self.parse_add_sub()
+        self.parse_logical_or()
+    }
+    
+    fn parse_logical_or(&mut self) -> Result<Expr, String> {
+        let mut left = self.parse_logical_and()?;
+
+        while matches!(self.current().kind, TokenKind::Or) {
+            self.advance();
+            let right = self.parse_logical_and()?;
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: BinOp::Or,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(left)
+    }
+    
+    fn parse_logical_and(&mut self) -> Result<Expr, String> {
+        let mut left = self.parse_comparison()?;
+
+        while matches!(self.current().kind, TokenKind::And) {
+            self.advance();
+            let right = self.parse_comparison()?;
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: BinOp::And,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(left)
+    }
+    
+    fn parse_comparison(&mut self) -> Result<Expr, String> {
+        let mut left = self.parse_add_sub()?;
+
+        while let Some(op) = match self.current().kind {
+            TokenKind::EqualEqual => Some(BinOp::Equal),
+            TokenKind::NotEqual => Some(BinOp::NotEqual),
+            TokenKind::Less => Some(BinOp::Less),
+            TokenKind::Greater => Some(BinOp::Greater),
+            TokenKind::LessEqual => Some(BinOp::LessEqual),
+            TokenKind::GreaterEqual => Some(BinOp::GreaterEqual),
+            _ => None,
+        } {
+            self.advance();
+            let right = self.parse_add_sub()?;
+            left = Expr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(left)
     }
         fn parse_add_sub(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_mul_div()?;
