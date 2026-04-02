@@ -234,13 +234,13 @@ impl Parser {
         Ok(left)
     }
         fn parse_mul_div(&mut self) -> Result<Expr, String> {
-        let mut left = self.parse_primary()?;
+        let mut left = self.parse_unary()?;
 
         loop {
             match self.current().kind {
                 TokenKind::Star => {
                     self.advance();
-                    let right = self.parse_primary()?;
+                    let right = self.parse_unary()?;
                     left = Expr::Binary {
                         left: Box::new(left),
                         op: BinOp::Mul,
@@ -249,10 +249,19 @@ impl Parser {
                 }
                 TokenKind::Slash => {
                     self.advance();
-                    let right = self.parse_primary()?;
+                    let right = self.parse_unary()?;
                     left = Expr::Binary {
                         left: Box::new(left),
                         op: BinOp::Div,
+                        right: Box::new(right),
+                    };
+                }
+                TokenKind::Percent => {
+                    self.advance();
+                    let right = self.parse_unary()?;
+                    left = Expr::Binary {
+                        left: Box::new(left),
+                        op: BinOp::Mod,
                         right: Box::new(right),
                     };
                 }
@@ -262,12 +271,42 @@ impl Parser {
 
         Ok(left)
     }
+    
+    fn parse_unary(&mut self) -> Result<Expr, String> {
+        match self.current().kind {
+            TokenKind::Not => {
+                self.advance();
+                let expr = self.parse_unary()?;
+                Ok(Expr::Unary {
+                    op: UnaryOp::Not,
+                    expr: Box::new(expr),
+                })
+            }
+            TokenKind::Minus => {
+                self.advance();
+                let expr = self.parse_unary()?;
+                Ok(Expr::Unary {
+                    op: UnaryOp::Neg,
+                    expr: Box::new(expr),
+                })
+            }
+            _ => self.parse_primary(),
+        }
+    }
         fn parse_primary(&mut self) -> Result<Expr, String> {
         match &self.current().kind {
             TokenKind::Number(n) => {
                 let value = *n;
                 self.advance();
                 Ok(Expr::Number(value))
+            }
+            TokenKind::True => {
+                self.advance();
+                Ok(Expr::Boolean(true))
+            }
+            TokenKind::False => {
+                self.advance();
+                Ok(Expr::Boolean(false))
             }
             TokenKind::Ident(name) => {
                 let n = name.clone();
@@ -280,7 +319,7 @@ impl Parser {
                 self.expect(TokenKind::RParen)?;
                 Ok(expr)
             }
-            _ => Err("Unexpected expression".to_string()),
+            _ => Err(format!("Unexpected token in expression: {:?}", self.current().kind)),
         }
     }
 
