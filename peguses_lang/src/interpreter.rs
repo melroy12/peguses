@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::ast::{BinOp, Expr, Stmt, UnaryOp};
 
+type Result<T> = std::result::Result<T, String>;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Number(i64),
@@ -9,18 +11,18 @@ pub enum Value {
 }
 
 impl Value {
-    fn as_number(&self) -> Result<i64, String> {
+    fn as_number(&self) -> Result<i64> {
         match self {
             Value::Number(n) => Ok(*n),
-            _ => Err("Expected a number".to_string()),
+            Value::Boolean(b) => Err(format!("Type error: expected number, got boolean '{}'"  , b)),
         }
     }
 
     #[allow(dead_code)]
-    fn as_boolean(&self) -> Result<bool, String> {
+    fn as_boolean(&self) -> Result<bool> {
         match self {
             Value::Boolean(b) => Ok(*b),
-            _ => Err("Expected a boolean".to_string()),
+            Value::Number(n) => Err(format!("Type error: expected boolean, got number '{}'"  , n)),
         }
     }
     
@@ -52,14 +54,14 @@ impl Interpreter {
         }
     }
 
-    pub fn run(&mut self, program: &[Stmt]) -> Result<(), String> {
+    pub fn run(&mut self, program: &[Stmt]) -> Result<()> {
         for stmt in program {
             self.execute(stmt)?;
         }
         Ok(())
     }
 
-    fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
+    fn execute(&mut self, stmt: &Stmt) -> Result<()> {
         match stmt {
             Stmt::Let { name, value } => {
                 let result = self.eval_expr(value)?;
@@ -68,7 +70,7 @@ impl Interpreter {
             }
             Stmt::Assign { name, value } => {
                 if !self.env.contains_key(name) {
-                    return Err(format!("Undefined variable: {}", name));
+                    return Err(format!("Assignment error: variable '{}' is not defined. Use 'let' to declare it first.", name));
                 }
                 let result = self.eval_expr(value)?;
                 self.env.insert(name.clone(), result);
@@ -111,7 +113,7 @@ impl Interpreter {
         }
     }
 
-    fn eval_expr(&self, expr: &Expr) -> Result<Value, String> {
+    fn eval_expr(&self, expr: &Expr) -> Result<Value> {
         match expr {
             Expr::Number(n) => Ok(Value::Number(*n)),
             
@@ -121,14 +123,18 @@ impl Interpreter {
                 self.env
                     .get(name)
                     .cloned()
-                    .ok_or_else(|| format!("Undefined variable: {}", name))
+                    .ok_or_else(|| format!("Reference error: variable '{}' is not defined", name))
             }
             
             Expr::Unary { op, expr } => {
                 let val = self.eval_expr(expr)?;
                 match op {
                     UnaryOp::Not => Ok(Value::Boolean(!val.is_truthy())),
-                    UnaryOp::Neg => Ok(Value::Number(-val.as_number()?)),
+                    UnaryOp::Neg => {
+                        let n = val.as_number()
+                            .map_err(|e| format!("Unary negation error: {}", e))?;
+                        Ok(Value::Number(-n))
+                    }
                 }
             }
 
@@ -139,34 +145,47 @@ impl Interpreter {
                 match op {
                     // Arithmetic operators
                     BinOp::Add => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
-                        Ok(Value::Number(l + r))
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Addition error: left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Addition error: right operand - {}", e))?;
+                        Ok(Value::Number(l.checked_add(r)
+                            .ok_or_else(|| "Addition error: integer overflow".to_string())?))
                     }
                     BinOp::Sub => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
-                        Ok(Value::Number(l - r))
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Subtraction error: left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Subtraction error: right operand - {}", e))?;
+                        Ok(Value::Number(l.checked_sub(r)
+                            .ok_or_else(|| "Subtraction error: integer overflow".to_string())?))
                     }
                     BinOp::Mul => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
-                        Ok(Value::Number(l * r))
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Multiplication error: left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Multiplication error: right operand - {}", e))?;
+                        Ok(Value::Number(l.checked_mul(r)
+                            .ok_or_else(|| "Multiplication error: integer overflow".to_string())?))
                     }
                     BinOp::Div => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Division error: left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Division error: right operand - {}", e))?;
                         if r == 0 {
-                            Err("Division by zero".to_string())
+                            Err("Division error: cannot divide by zero".to_string())
                         } else {
                             Ok(Value::Number(l / r))
                         }
                     }
                     BinOp::Mod => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Modulo error: left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Modulo error: right operand - {}", e))?;
                         if r == 0 {
-                            Err("Modulo by zero".to_string())
+                            Err("Modulo error: cannot compute modulo by zero".to_string())
                         } else {
                             Ok(Value::Number(l % r))
                         }
@@ -180,23 +199,31 @@ impl Interpreter {
                         Ok(Value::Boolean(left_val != right_val))
                     }
                     BinOp::Less => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Comparison error (<): left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Comparison error (<): right operand - {}", e))?;
                         Ok(Value::Boolean(l < r))
                     }
                     BinOp::Greater => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Comparison error (>): left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Comparison error (>): right operand - {}", e))?;
                         Ok(Value::Boolean(l > r))
                     }
                     BinOp::LessEqual => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Comparison error (<=): left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Comparison error (<=): right operand - {}", e))?;
                         Ok(Value::Boolean(l <= r))
                     }
                     BinOp::GreaterEqual => {
-                        let l = left_val.as_number()?;
-                        let r = right_val.as_number()?;
+                        let l = left_val.as_number()
+                            .map_err(|e| format!("Comparison error (>=): left operand - {}", e))?;
+                        let r = right_val.as_number()
+                            .map_err(|e| format!("Comparison error (>=): right operand - {}", e))?;
                         Ok(Value::Boolean(l >= r))
                     }
                     
