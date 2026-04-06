@@ -4,7 +4,7 @@ use crate::ast::{BinOp, Expr, Stmt, UnaryOp};
 
 type Result<T> = std::result::Result<T, String>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
     Number(i64),
     Boolean(bool),
