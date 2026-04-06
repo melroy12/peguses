@@ -47,11 +47,17 @@ pub struct Interpreter {
     env: HashMap<String, Value>,
 }
 
-impl Interpreter {
-    pub fn new() -> Self {
+impl Default for Interpreter {
+    fn default() -> Self {
         Self {
             env: HashMap::new(),
         }
+    }
+}
+
+impl Interpreter {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn run(&mut self, program: &[Stmt]) -> Result<()> {
