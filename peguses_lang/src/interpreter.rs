@@ -14,7 +14,7 @@ impl Value {
     fn as_number(&self) -> Result<i64> {
         match self {
             Value::Number(n) => Ok(*n),
-            Value::Boolean(b) => Err(format!("Type error: expected number, got boolean '{}'"  , b)),
+            Value::Boolean(b) => Err(format!("Type error: expected number, got boolean '{}'", b)),
         }
     }
 
@@ -22,7 +22,7 @@ impl Value {
     fn as_boolean(&self) -> Result<bool> {
         match self {
             Value::Boolean(b) => Ok(*b),
-            Value::Number(n) => Err(format!("Type error: expected boolean, got number '{}'"  , n)),
+            Value::Number(n) => Err(format!("Type error: expected boolean, got number '{}'", n)),
         }
     }
     
