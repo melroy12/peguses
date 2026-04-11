@@ -4,6 +4,7 @@ use crate::ast::{BinOp, Expr, Stmt, UnaryOp};
 
 type Result<T> = std::result::Result<T, String>;
 
+/// Runtime value representation
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
     Number(i64),
@@ -18,7 +19,6 @@ impl Value {
         }
     }
 
-    #[allow(dead_code)]
     fn as_boolean(&self) -> Result<bool> {
         match self {
             Value::Boolean(b) => Ok(*b),
@@ -43,6 +43,7 @@ impl std::fmt::Display for Value {
     }
 }
 
+/// The interpreter that executes Peguses programs
 pub struct Interpreter {
     env: HashMap<String, Value>,
 }
@@ -56,10 +57,12 @@ impl Default for Interpreter {
 }
 
 impl Interpreter {
+    /// Create a new interpreter with an empty environment
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Execute a program (list of statements)
     pub fn run(&mut self, program: &[Stmt]) -> Result<()> {
         for stmt in program {
             self.execute(stmt)?;
