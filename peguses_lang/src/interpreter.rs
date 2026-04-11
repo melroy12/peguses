@@ -18,8 +18,7 @@ impl Value {
             Value::Boolean(b) => Err(format!("Type error: expected number, got boolean '{}'", b)),
         }
     }
-
-    fn as_boolean(&self) -> Result<bool> {
+    #[allow(dead_code)]    fn as_boolean(&self) -> Result<bool> {
         match self {
             Value::Boolean(b) => Ok(*b),
             Value::Number(n) => Err(format!("Type error: expected boolean, got number '{}'", n)),
