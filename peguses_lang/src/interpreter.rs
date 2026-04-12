@@ -8,20 +8,29 @@ type Result<T> = std::result::Result<T, String>;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
     Number(i64),
-    Boolean(bool),
-}
+    Boolean(bool),    String(String),}
 
 impl Value {
     fn as_number(&self) -> Result<i64> {
         match self {
             Value::Number(n) => Ok(*n),
             Value::Boolean(b) => Err(format!("Type error: expected number, got boolean '{}'", b)),
+            Value::String(s) => Err(format!("Type error: expected number, got string '{}'", s)),
         }
     }
     #[allow(dead_code)]    fn as_boolean(&self) -> Result<bool> {
         match self {
             Value::Boolean(b) => Ok(*b),
             Value::Number(n) => Err(format!("Type error: expected boolean, got number '{}'", n)),
+            Value::String(s) => Err(format!("Type error: expected boolean, got string '{}'", s)),
+        }
+    }
+    
+    fn as_string(&self) -> Result<String> {
+        match self {
+            Value::String(s) => Ok(s.clone()),
+            Value::Number(n) => Err(format!("Type error: expected string, got number '{}'", n)),
+            Value::Boolean(b) => Err(format!("Type error: expected string, got boolean '{}'", b)),
         }
     }
     
@@ -29,6 +38,7 @@ impl Value {
         match self {
             Value::Boolean(b) => *b,
             Value::Number(n) => *n != 0,
+            Value::String(s) => !s.is_empty(),
         }
     }
 }
@@ -38,6 +48,7 @@ impl std::fmt::Display for Value {
         match self {
             Value::Number(n) => write!(f, "{}", n),
             Value::Boolean(b) => write!(f, "{}", b),
+            Value::String(s) => write!(f, "{}", s),
         }
     }
 }
