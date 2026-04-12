@@ -6,12 +6,17 @@ pub enum TokenKind {
     If,
     Else,
     While,
+    For,
+    In,
+    Break,
+    Continue,
     True,
     False,
     
     // Identifiers and literals
     Ident(String),
     Number(i64),
+    String(String),
     
     // Arithmetic operators
     Plus,
@@ -42,6 +47,7 @@ pub enum TokenKind {
     RParen,
     LBrace,
     RBrace,
+    DotDot,  // .. for ranges
 
     Eof,
 }
