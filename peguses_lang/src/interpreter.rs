@@ -4,6 +4,14 @@ use crate::ast::{BinOp, Expr, Stmt, UnaryOp};
 
 type Result<T> = std::result::Result<T, String>;
 
+/// Loop control flow
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum LoopControl {
+    None,
+    Break,
+    Continue,
+}
+
 /// Runtime value representation
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
