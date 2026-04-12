@@ -139,6 +139,45 @@ impl Parser {
         Ok(Stmt::While { condition, body })
     }
     
+    fn parse_for(&mut self) -> Result<Stmt, String> {
+        self.advance(); // consume 'for'
+
+        let var = match &self.current().kind {
+            TokenKind::Ident(s) => {
+                let n = s.clone();
+                self.advance();
+                n
+            }
+            _ => return Err("Expected identifier after 'for'".to_string()),
+        };
+
+        self.expect(TokenKind::In)?;
+
+        let start = self.parse_expr()?;
+
+        self.expect(TokenKind::DotDot)?;
+
+        let end = self.parse_expr()?;
+
+        self.expect(TokenKind::LBrace)?;
+        let body = self.parse_block()?;
+        self.expect(TokenKind::RBrace)?;
+
+        Ok(Stmt::For { var, start, end, body })
+    }
+    
+    fn parse_break(&mut self) -> Result<Stmt, String> {
+        self.advance(); // consume 'break'
+        self.expect(TokenKind::Semicolon)?;
+        Ok(Stmt::Break)
+    }
+    
+    fn parse_continue(&mut self) -> Result<Stmt, String> {
+        self.advance(); // consume 'continue'
+        self.expect(TokenKind::Semicolon)?;
+        Ok(Stmt::Continue)
+    }
+    
     fn parse_block(&mut self) -> Result<Vec<Stmt>, String> {
         let mut statements = Vec::new();
 
@@ -302,6 +341,11 @@ impl Parser {
                 let value = *n;
                 self.advance();
                 Ok(Expr::Number(value))
+            }
+            TokenKind::String(s) => {
+                let value = s.clone();
+                self.advance();
+                Ok(Expr::String(value))
             }
             TokenKind::True => {
                 self.advance();
