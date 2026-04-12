@@ -2,6 +2,7 @@
 pub enum Expr {
     Number(i64),
     Boolean(bool),
+    String(String),
     Ident(String),
     Binary {
         op: BinOp,
@@ -40,6 +41,9 @@ pub enum BinOp {
     // Logical
     And,
     Or,
+    
+    // String
+    Concat,  // String concatenation
 }
 
 #[derive(Debug, Clone)]
