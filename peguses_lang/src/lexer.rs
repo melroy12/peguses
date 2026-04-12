@@ -81,12 +81,64 @@ impl Lexer{
             "if" => TokenKind::If,
             "else" => TokenKind::Else,
             "while" => TokenKind::While,
+            "for" => TokenKind::For,
+            "in" => TokenKind::In,
+            "break" => TokenKind::Break,
+            "continue" => TokenKind::Continue,
             "true" => TokenKind::True,
             "false" => TokenKind::False,
             _ => TokenKind::Ident(value),
         };
         Token::new(kind, start)
 
+    }
+    
+    fn read_string(&mut self, start: usize) -> Result<Token, String> {
+        self.advance(); // consume opening quote
+        let mut value = String::new();
+        
+        while let Some(c) = self.current() {
+            if c == '"' {
+                self.advance(); // consume closing quote
+                return Ok(Token::new(TokenKind::String(value), start));
+            } else if c == '\\' {
+                // Handle escape sequences
+                self.advance();
+                match self.current() {
+                    Some('n') => {
+                        value.push('\n');
+                        self.advance();
+                    }
+                    Some('t') => {
+                        value.push('\t');
+                        self.advance();
+                    }
+                    Some('r') => {
+                        value.push('\r');
+                        self.advance();
+                    }
+                    Some('\\') => {
+                        value.push('\\');
+                        self.advance();
+                    }
+                    Some('"') => {
+                        value.push('"');
+                        self.advance();
+                    }
+                    Some(ch) => {
+                        return Err(format!("Invalid escape sequence '\\{}' at position {}", ch, self.pos));
+                    }
+                    None => {
+                        return Err(format!("Unterminated string at position {}", start));
+                    }
+                }
+            } else {
+                value.push(c);
+                self.advance();
+            }
+        }
+        
+        Err(format!("Unterminated string at position {}", start))
     }
 
     pub fn next_token(&mut self) -> Result<Token, String> {
@@ -109,11 +161,21 @@ impl Lexer{
         let token = match self.current() {
             Some(c) if c.is_ascii_digit() => self.read_number(start),
             Some(c) if c.is_ascii_alphanumeric() || c == '_' => self.read_identifier(start),
+            Some('"') => return self.read_string(start),
             Some('+') => {self.advance(); Token::new(TokenKind::Plus, start)},
             Some('-') => {self.advance(); Token::new(TokenKind::Minus, start)},
             Some('*') => {self.advance(); Token::new(TokenKind::Star, start)},
             Some('%') => {self.advance(); Token::new(TokenKind::Percent, start)},
             Some('/') => {self.advance(); Token::new(TokenKind::Slash, start)},
+            Some('.') => {
+                self.advance();
+                if self.current() == Some('.') {
+                    self.advance();
+                    Token::new(TokenKind::DotDot, start)
+                } else {
+                    return Err(format!("Unexpected character '.' at position {}", start));
+                }
+            },
             Some('=') => {
                 self.advance();
                 if self.current() == Some('=') {
