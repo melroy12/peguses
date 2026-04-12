@@ -48,6 +48,59 @@ fn main() {
         let result = (10 + 5) * 2 - 3;
         print result;
         
+        // == NEW FEATURES ==
+        
+        // Strings
+        let greeting = "Hello";
+        let name = "World";
+        let message = greeting + " " + name + "!";
+        print message;
+        
+        // String with escapes
+        let multiline = "Line 1\nLine 2\tTabbed";
+        print multiline;
+        
+        // For loops
+        print "Counting to 5:";
+        for i in 0..5 {
+            print i;
+        }
+        
+        // For loop with range
+        print "Numbers 10 to 15:";
+        for num in 10..15 {
+            print num;
+        }
+        
+        // Break statement
+        print "Break example:";
+        for i in 0..10 {
+            if i == 5 {
+                break;
+            }
+            print i;
+        }
+        
+        // Continue statement
+        print "Continue example (skip 3):";
+        for i in 0..7 {
+            if i == 3 {
+                continue;
+            }
+           print i;
+        }
+        
+        // Nested loops with break
+        print "Nested loop:";
+        for i in 0..3 {
+            for j in 0..3 {
+                if j == 2 {
+                    break;
+                }
+                print i * 10 + j;
+            }
+        }
+        
         // Fibonacci-like sequence
         let n1 = 0;
         let n2 = 1;
