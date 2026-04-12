@@ -45,6 +45,9 @@ impl Parser {
             TokenKind::Print => self.parse_print(),
             TokenKind::If => self.parse_if(),
             TokenKind::While => self.parse_while(),
+            TokenKind::For => self.parse_for(),
+            TokenKind::Break => self.parse_break(),
+            TokenKind::Continue => self.parse_continue(),
             TokenKind::Ident(_) => self.parse_assignment(),
             _ => Err(format!("Unexpected statement: {:?}", self.current().kind)),
         }
