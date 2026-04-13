@@ -13,10 +13,13 @@ enum LoopControl {
 }
 
 /// Runtime value representation
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Number(i64),
-    Boolean(bool),    String(String),}
+    Boolean(bool),
+    String(String),
+}
+
 
 impl Value {
     fn as_number(&self) -> Result<i64> {

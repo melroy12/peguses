@@ -7,6 +7,7 @@ A simple programming language written in Rust.
 ### Data Types
 - **Integers**: 64-bit signed integers (`i64`)
 - **Booleans**: `true` and `false`
+- **Strings**: Text enclosed in double quotes with escape sequence support
 
 ### Operators
 
@@ -17,6 +18,9 @@ A simple programming language written in Rust.
 - Division: `/`
 - Modulo: `%`
 - Unary negation: `-`
+
+**String Operators:**
+- Concatenation: `+` (for strings)
 
 **Comparison Operators:**
 - Equal: `==`
@@ -66,6 +70,48 @@ while counter > 0 {
     print counter;
     counter = counter - 1;
 }
+```
+
+**For Loop:**
+```
+for i in 0..10 {
+    print i;
+}
+```
+
+**Break Statement:**
+```
+for i in 0..10 {
+    if i == 5 {
+        break;
+    }
+    print i;
+}
+```
+
+**Continue Statement:**
+```
+for i in 0..10 {
+    if i % 2 == 0 {
+        continue;
+    }
+    print i;  // Only prints odd numbers
+}
+```
+
+**String Literals:**
+```
+let greeting = "Hello, World!";
+let message = "Line 1\nLine 2";  // Escape sequences: \n, \t, \r, \\, \"
+print greeting;
+```
+
+**String Concatenation:**
+```
+let first = "Hello";
+let second = "World";
+let combined = first + " " + second;
+print combined;  // Prints: Hello World
 ```
 
 ### Comments
