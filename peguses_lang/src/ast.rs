@@ -4,6 +4,7 @@ pub enum Expr {
     Boolean(bool),
     String(String),
     Ident(String),
+    Input,
     Binary {
         op: BinOp,
         left: Box<Expr>,
