@@ -355,6 +355,12 @@ impl Parser {
                 self.advance();
                 Ok(Expr::Boolean(false))
             }
+            TokenKind::Input => {
+                self.advance(); // consume 'input'
+                self.expect(TokenKind::LParen)?;
+                self.expect(TokenKind::RParen)?;
+                Ok(Expr::Input)
+            }
             TokenKind::Ident(name) => {
                 let n = name.clone();
                 self.advance();
