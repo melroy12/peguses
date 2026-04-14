@@ -3,6 +3,7 @@ pub enum TokenKind {
     // Keywords
     Let,
     Print,
+    Input,
     If,
     Else,
     While,
