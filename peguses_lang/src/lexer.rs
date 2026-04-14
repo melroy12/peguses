@@ -78,6 +78,7 @@ impl Lexer{
         let kind = match value.as_str() {
             "let" => TokenKind::Let,
             "print" => TokenKind::Print,
+            "input" => TokenKind::Input,
             "if" => TokenKind::If,
             "else" => TokenKind::Else,
             "while" => TokenKind::While,
