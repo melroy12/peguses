@@ -182,6 +182,32 @@ impl Interpreter {
             Expr::Boolean(b) => Ok(Value::Boolean(*b)),
             
             Expr::String(s) => Ok(Value::String(s.clone())),
+            
+            Expr::Input => {
+                use std::io::{self, Write};
+                
+                let mut input = String::new();
+                io::stdin()
+                    .read_line(&mut input)
+                    .map_err(|e| format!("Input error: {}", e))?;
+                
+                let trimmed = input.trim();
+                
+                // Try to parse as number
+                if let Ok(num) = trimmed.parse::<i64>() {
+                    return Ok(Value::Number(num));
+                }
+                
+                // Try to parse as boolean
+                if trimmed == "true" {
+                    return Ok(Value::Boolean(true));
+                } else if trimmed == "false" {
+                    return Ok(Value::Boolean(false));
+                }
+                
+                // Otherwise, treat as string
+                Ok(Value::String(trimmed.to_string()))
+            }
 
             Expr::Ident(name) => {
                 self.env
